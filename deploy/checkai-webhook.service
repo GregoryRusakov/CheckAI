@@ -1,0 +1,12 @@
+[Unit]
+Description=Deploy checkai.analitica-soft.ru from GitHub
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+User=root
+ExecStartPre=/usr/bin/rm -f -- /home/main/scripts/repos/pending/checkai-webhook.pending
+ExecStart=/home/main/scripts/repos/checkai-auto-deploy.sh
+TimeoutStartSec=10min

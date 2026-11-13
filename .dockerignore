@@ -1,0 +1,7 @@
+.git
+.codex-docker
+.env
+var
+
+database/checkai.sqlite3*
+database/collector.lock

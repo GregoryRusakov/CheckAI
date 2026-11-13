@@ -1,0 +1,8 @@
+/var/
+/.env
+database/checkai.sqlite3*
+database/collector.lock
+/logs-nginx
+.codex-docker
+/digests/*
+!/digests/readme.txt

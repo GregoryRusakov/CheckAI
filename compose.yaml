@@ -1,0 +1,55 @@
+name: checkai
+x-app: &app
+  build: .
+  image: checkai:local
+  volumes:
+    - ./database:/opt/checkai/var
+
+services:
+  web:
+    <<: *app
+    command: ["/bin/sh", "-ec", "runuser -u www-data -- php bin/init-db.php && exec apache2-foreground"]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:555:80"
+    volumes:
+      - ./database:/opt/checkai/var
+      - ./digests:/var/www/checkai.analitica-soft.ru/digests
+      - type: bind
+        source: ${CHECKAI_LOG_DIR:-../logs-nginx}
+        target: /var/logs-nginx
+        read_only: true
+        bind:
+          create_host_path: false
+
+  collector:
+    <<: *app
+    user: www-data
+    command: ["/bin/sh", "-c", "while sleep 300; do php bin/collect.php --checksettings; done"]
+    restart: unless-stopped
+    depends_on: [web]
+    volumes:
+      - ./database:/opt/checkai/var
+      - type: bind
+        source: ${CHECKAI_LOG_DIR:-../logs-nginx}
+        target: /var/logs-nginx
+        read_only: true
+        bind:
+          create_host_path: false
+
+  digest-scheduler:
+    <<: *app
+    user: www-data
+    environment:
+      TZ: Asia/Yekaterinburg
+    command: ["php", "bin/digest-scheduler.php"]
+    restart: unless-stopped
+    volumes:
+      - ./database:/opt/checkai/var
+      - ./digests:/var/www/checkai.analitica-soft.ru/digests
+
+  admin-setup:
+    <<: *app
+    profiles: [setup]
+    user: www-data
+    command: ["/bin/sh", "-ec", "php bin/init-db.php && exec php bin/admin-setup.php"]
