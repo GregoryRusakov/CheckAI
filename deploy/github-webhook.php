@@ -5,7 +5,7 @@ declare(strict_types=1);
 const WEBHOOK_SECRET_FILE = '/home/main/scripts/repos/secrets/checkai-webhook.secret';
 const WEBHOOK_PENDING_FILE = '/home/main/scripts/repos/pending/checkai-webhook.pending';
 const WEBHOOK_MAX_PAYLOAD_BYTES = 1048576;
-const WEBHOOK_REPOSITORY = 'GregoryRusakov/checkai';
+const WEBHOOK_REPOSITORY = 'GregoryRusakov/CheckAI';
 const WEBHOOK_BRANCH = 'refs/heads/main';
 
 header('Cache-Control: no-store');
