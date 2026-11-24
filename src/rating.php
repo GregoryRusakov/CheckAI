@@ -36,8 +36,8 @@ if ($botTypeId && !in_array($botTypeId, $validBotTypeIds, true)) {
 
 $filterLabels = [
     'verified' => 'Только подтверждённые по IP боты',
-    'pages' => 'Только страницы сайта',
-    'ok' => 'Только HTTP 200 (OK)',
+    'pages' => 'Исключить картинки, css, js и прочие',
+    'ok' => 'Только успешные (HTTP 200)',
 ];
 $savedFilters = array_intersect_key($savedSettings, $filterLabels);
 $filters = isset($_GET['filters_set']) ? array_intersect_key($_GET, $filterLabels) : $savedFilters;
@@ -76,9 +76,6 @@ if (isset($filters['pages'])) {
     $db->sqliteCreateFunction('is_site_page', static function (string $path): int {
         $path = strtolower(rawurldecode($path));
         $filename = basename($path);
-        if (in_array($filename, ['robots.txt', 'ads.txt', 'humans.txt', 'security.txt'], true)) {
-            return 0;
-        }
         $extension = pathinfo($filename, PATHINFO_EXTENSION);
         return (int) !in_array($extension, [
             'js', 'mjs', 'cjs', 'css', 'map', 'wasm',
@@ -87,7 +84,7 @@ if (isset($filters['pages'])) {
             'bmp', 'tif', 'tiff', 'apng', 'heic', 'heif', 'jxl',
             'mp3', 'wav', 'ogg', 'oga', 'flac', 'aac', 'm4a',
             'mp4', 'webm', 'ogv', 'mov', 'm4v', 'm3u8', 'ts', 'vtt',
-            'json', 'webmanifest', 'manifest', 'appcache', 'xml', 'rss', 'atom',
+            'json', 'webmanifest', 'manifest', 'appcache', 'rss', 'atom',
         ], true);
     }, 1, PDO::SQLITE_DETERMINISTIC);
 }
