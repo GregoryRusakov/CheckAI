@@ -72,22 +72,27 @@ if (chart) {
                 y -= barHeight;
                 const totalLabel = `${day.date} · Всего: ${number.format(totals[dayIndex])}`;
                 const typeLabel = `${data.types[typeIndex]}: ${number.format(value)}`;
-                const bar = element('rect', {x, y, width: barWidth, height: barHeight, fill: colors[typeIndex % colors.length], tabindex: 0, 'aria-label': `${totalLabel}. ${typeLabel}`, 'aria-describedby': 'chart-tooltip'});
+                const params = new URLSearchParams({from: day.date, to: day.date, bot_type: data.typeIds[typeIndex], filters_set: '1'});
+                if (data.site) params.set('site', data.site);
+                Object.entries(data.filters).forEach(([key, value]) => params.set(key, value));
+                const link = element('a', {href: `/?${params}#reports`, class: 'chart__sector', 'aria-label': `${totalLabel}. ${typeLabel}. Открыть отчёт`, 'aria-describedby': 'chart-tooltip'});
+                const bar = element('rect', {x, y, width: barWidth, height: barHeight, fill: colors[typeIndex % colors.length]});
                 const showTooltip = (clientX, clientY) => {
                     tooltipTotal.textContent = totalLabel;
                     tooltipType.textContent = typeLabel;
                     tooltip.hidden = false;
                     positionTooltip(clientX, clientY);
                 };
-                bar.addEventListener('pointerenter', (event) => showTooltip(event.clientX, event.clientY));
-                bar.addEventListener('pointermove', (event) => positionTooltip(event.clientX, event.clientY));
-                bar.addEventListener('pointerleave', () => { tooltip.hidden = true; });
-                bar.addEventListener('focus', () => {
+                link.addEventListener('pointerenter', (event) => showTooltip(event.clientX, event.clientY));
+                link.addEventListener('pointermove', (event) => positionTooltip(event.clientX, event.clientY));
+                link.addEventListener('pointerleave', () => { tooltip.hidden = true; });
+                link.addEventListener('focus', () => {
                     const bounds = bar.getBoundingClientRect();
                     showTooltip(bounds.left + bounds.width / 2, bounds.top);
                 });
-                bar.addEventListener('blur', () => { tooltip.hidden = true; });
-                plot.append(bar);
+                link.addEventListener('blur', () => { tooltip.hidden = true; });
+                link.append(bar);
+                plot.append(link);
             });
             const [year, month, date] = day.date.split('-');
             const labelX = x + barWidth / 2;
