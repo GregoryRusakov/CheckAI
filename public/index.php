@@ -233,7 +233,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $save = $db->prepare('UPDATE users SET report_filters = ? WHERE id = ? AND enabled = 1');
         $save->execute([json_encode($filters), $_SESSION['user_id'] ?? 0]);
         $params = array_filter(
-            array_intersect_key($_POST, array_flip(['view', 'site', 'company', 'bot', 'bot_type', 'site_sort', 'path', 'from', 'to', 'verified', 'pages', 'ok', 'filters_set'])),
+            array_intersect_key($_POST, array_flip(['view', 'site', 'company', 'bot', 'bot_type', 'site_sort', 'time_sort', 'path', 'from', 'to', 'verified', 'pages', 'ok', 'filters_set'])),
             'is_string'
         );
         header('Location: /?' . http_build_query($params) . ((($params['view'] ?? '') === 'rating') ? '#rating' : '#reports'), true, 303);

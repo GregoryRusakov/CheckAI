@@ -42,6 +42,7 @@ if ($botTypeId && !in_array($botTypeId, array_map('intval', $validBotTypeIds), t
 $botTypeParams = $botTypeId ? ['bot_type' => $botTypeId] : [];
 $path = is_string($_GET['path'] ?? null) ? $_GET['path'] : null;
 $botParams = ['site' => $siteId, 'company' => $companyId, 'bot' => $botId];
+$timeSort = ($_GET['time_sort'] ?? null) === 'asc' ? 'asc' : 'desc';
 $page = filter_var($_GET['page'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 1;
 
 $company = false;
@@ -264,6 +265,7 @@ $scopeTitle = match (true) {
             <?php if ($id): ?><input type="hidden" name="<?= escape($key) ?>" value="<?= $id ?>"><?php endif; ?>
         <?php endforeach; ?>
         <?php if ($path !== null): ?><input type="hidden" name="path" value="<?= escape($path) ?>"><?php endif; ?>
+        <?php if ($path !== null): ?><input type="hidden" name="time_sort" value="<?= escape($timeSort) ?>"><?php endif; ?>
         <div class="filters__controls">
             <label class="field filters__inline-field">
                 <span>Вид</span>
@@ -312,9 +314,10 @@ $scopeTitle = match (true) {
         $pageCount = max(1, (int) ceil($total / 50));
         $page = min($page, $pageCount);
         $timezone = new DateTimeZone($db->query('SELECT report_timezone FROM settings WHERE id = 1')->fetchColumn());
+        $timeOrder = $timeSort === 'asc' ? 'ASC' : 'DESC';
         $requests = $db->prepare('SELECT r.requested_at_utc, s.domain, r.method, r.request_path, r.http_status, r.source_ip, r.verified
             FROM ' . $requestSource . ' AS r JOIN sites s ON s.id = r.site_id WHERE r.bot_id = ? AND r.site_id = ? AND r.request_path = ?
-            ORDER BY r.requested_at_utc DESC, r.id DESC LIMIT 50 OFFSET ?');
+            ORDER BY r.requested_at_utc ' . $timeOrder . ', r.id ' . $timeOrder . ' LIMIT 50 OFFSET ?');
         $requests->bindValue(1, $botId, PDO::PARAM_INT);
         $requests->bindValue(2, $siteId, PDO::PARAM_INT);
         $requests->bindValue(3, $path, PDO::PARAM_STR);
@@ -331,7 +334,9 @@ $scopeTitle = match (true) {
                     <thead>
                     <tr>
                         <th scope="col">Дата</th>
-                        <th scope="col">Время, <?= escape(utcOffsetLabel($timezone, $to)) ?></th>
+                        <th scope="col" aria-sort="<?= $timeSort === 'asc' ? 'ascending' : 'descending' ?>">
+                            <a class="sort-link" href="<?= escape(reportUrl($botParams + ['path' => $path, 'time_sort' => $timeSort === 'asc' ? 'desc' : 'asc'])) ?>">Время, <?= escape(utcOffsetLabel($timezone, $to)) ?> <span aria-hidden="true"><?= $timeSort === 'asc' ? '↑' : '↓' ?></span></a>
+                        </th>
                         <th scope="col" class="col-site">Сайт</th>
                         <th scope="col">Метод</th>
                         <th scope="col">Страница</th>
@@ -368,7 +373,7 @@ $scopeTitle = match (true) {
         <?php endif; ?>
         <?php if ($pageCount > 1): ?>
             <nav class="pager" aria-label="Страницы запросов">
-                <?php $params = $botParams + ['path' => $path]; ?>
+                <?php $params = $botParams + ['path' => $path, 'time_sort' => $timeSort]; ?>
                 <?php if ($page > 1): ?><a class="btn btn--sm" href="<?= escape(reportUrl($params + ['page' => $page - 1])) ?>">Назад</a><?php endif; ?>
                 <span>Страница <span aria-current="page"><?= $page ?></span> из <?= $pageCount ?></span>
                 <?php if ($page < $pageCount): ?><a class="btn btn--sm" href="<?= escape(reportUrl($params + ['page' => $page + 1])) ?>">Далее</a><?php endif; ?>
