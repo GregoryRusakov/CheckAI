@@ -963,7 +963,7 @@ $pageTitle = $settingsPage && $isAdmin ? 'Настройки — CheckAI' : ($ra
                         <label class="field">
                             <span>Корень каталога логов</span>
                             <input name="log_root" value="<?= escape($settings['log_root']) ?>" required maxlength="4096" spellcheck="false" autocapitalize="off" autocomplete="off" class="mono">
-                            <small>Абсолютный путь к каталогу, доступному PHP. Он хранится в базе этой установки. Для новых баз значение по умолчанию: <span class="mono">/var/logs-nginx</span>.</small>
+                            <small>Абсолютный путь к каталогу, доступному PHP. Он хранится в базе этой установки. Для новых баз значение по умолчанию: <span class="mono">/var/logs</span>.</small>
                         </label>
                         <label class="check">
                             <input type="checkbox" name="enabled" value="1"<?= $automatic ? ' checked' : '' ?>>

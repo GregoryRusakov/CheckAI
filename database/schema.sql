@@ -1,6 +1,6 @@
 CREATE TABLE settings (
     id INTEGER PRIMARY KEY CHECK (id = 1),
-    log_root TEXT NOT NULL DEFAULT '/var/logs-nginx',
+    log_root TEXT NOT NULL DEFAULT '/var/logs',
     report_timezone TEXT NOT NULL DEFAULT 'Asia/Yekaterinburg',
     digest_directory TEXT NOT NULL DEFAULT '/var/www/checkai.analitica-soft.ru/digests',
     daily_digest INTEGER NOT NULL DEFAULT 0 CHECK (daily_digest IN (0, 1))

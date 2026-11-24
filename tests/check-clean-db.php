@@ -10,6 +10,11 @@ if ($version !== 20) {
     throw new RuntimeException("Expected SQLite schema version 20, got $version.");
 }
 
+$logRoot = $database->query('SELECT log_root FROM settings WHERE id = 1')->fetchColumn();
+if ($logRoot !== '/var/logs') {
+    throw new RuntimeException('Fresh database has an unexpected log root.');
+}
+
 $botCount = (int) $database->query('SELECT COUNT(*) FROM bots')->fetchColumn();
 $userCount = (int) $database->query('SELECT COUNT(*) FROM users')->fetchColumn();
 $signatureCount = (int) $database->query('SELECT COUNT(*) FROM bot_signatures')->fetchColumn();
