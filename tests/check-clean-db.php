@@ -6,13 +6,22 @@ require dirname(__DIR__) . '/src/database.php';
 
 $database = openDatabase();
 $version = (int) $database->query('PRAGMA user_version')->fetchColumn();
-if ($version !== 20) {
-    throw new RuntimeException("Expected SQLite schema version 20, got $version.");
+if ($version !== 21) {
+    throw new RuntimeException("Expected SQLite schema version 21, got $version.");
 }
 
 $logRoot = $database->query('SELECT log_root FROM settings WHERE id = 1')->fetchColumn();
 if ($logRoot !== '/var/logs') {
     throw new RuntimeException('Fresh database has an unexpected log root.');
+}
+
+$findCompany = $database->prepare('SELECT description FROM companies WHERE name = ?');
+foreach (['Amazon', 'Anthropic', 'ByteDance', 'Common Crawl', 'DeepSeek', 'Google', 'OpenAI', 'Perplexity'] as $name) {
+    $findCompany->execute([$name]);
+    $description = $findCompany->fetchColumn();
+    if (!is_string($description) || trim($description) === '') {
+        throw new RuntimeException("Fresh database is missing the description for $name.");
+    }
 }
 
 $botCount = (int) $database->query('SELECT COUNT(*) FROM bots')->fetchColumn();

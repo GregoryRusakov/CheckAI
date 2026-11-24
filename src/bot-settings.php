@@ -117,7 +117,7 @@ if ($botId || $newBot) {
                         </div>
                         <label class="field">
                             <span>Примечание</span>
-                            <textarea name="note" rows="2"><?= escape($bot['note']) ?></textarea>
+                            <textarea name="note" rows="1" wrap="off" class="bot-note"><?= escape($bot['note']) ?></textarea>
                         </label>
                     </div>
                 </div>

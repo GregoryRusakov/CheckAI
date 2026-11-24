@@ -13,7 +13,7 @@ The web dashboard and collector run on PHP 8.3, and data is stored in SQLite. Ch
 - Manual or automatic data collection and daily digests;
 - Local data storage in SQLite.
 
-# CheckAI (на русском)
+# CheckAI для вашего сервера
 
 CheckAI — сервис для мониторинга обращений ИИ-ботов к сайтам. Он читает access-логи Nginx/Apache2 в формате `combined`, распознаёт известных ботов и показывает статистику по сайтам, компаниям, ботам и запрошенным страницам.
 

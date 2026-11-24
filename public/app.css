@@ -681,6 +681,10 @@ textarea {
     resize: vertical;
 }
 
+textarea.bot-note {
+    min-height: 36px;
+}
+
 textarea.mono {
     font-family: var(--font-mono);
     font-size: var(--step--1);

@@ -125,7 +125,7 @@ try {
             $database->exec("UPDATE bots SET bot_type_id = {$ids['Прочее']} WHERE bot_type_id IS NULL");
             $database->exec('CREATE INDEX bots_type ON bots (bot_type_id)');
             $database->exec('PRAGMA user_version = 7');
-        } elseif ($version > 20) {
+        } elseif ($version > 21) {
             throw new RuntimeException("Unsupported SQLite schema version: $version");
         }
         if ($version > 0 && $version < 8) {
@@ -306,6 +306,14 @@ try {
                     AND pattern = 'DeepSeek-Harness'")
                 ->execute();
             $database->exec('PRAGMA user_version = 20');
+        }
+        if ($version < 21) {
+            $descriptions = require dirname(__DIR__) . '/database/company-descriptions.php';
+            $update = $database->prepare("UPDATE companies SET description = ? WHERE name = ? AND trim(description) = ''");
+            foreach ($descriptions as $name => $description) {
+                $update->execute([$description, $name]);
+            }
+            $database->exec('PRAGMA user_version = 21');
         }
         $database->exec('COMMIT');
     } catch (Throwable $error) {
