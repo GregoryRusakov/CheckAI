@@ -60,6 +60,7 @@ $error = '';
 $passwordSetupPage = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) === '/set-password';
 $settingsPage = ($_GET['view'] ?? '') === 'settings';
 $ratingPage = ($_GET['view'] ?? '') === 'rating';
+$chartsPage = ($_GET['view'] ?? '') === 'charts';
 $settingsTab = in_array($_GET['tab'] ?? '', ['bots', 'bot-types', 'users', 'collection', 'digests'], true) ? $_GET['tab'] : 'sites';
 if (isset($_GET['company']) || isset($_GET['bot']) || isset($_GET['new_bot']) || isset($_GET['new_company'])) {
     $settingsTab = 'bots';
@@ -672,9 +673,10 @@ if ($user) {
 }
 $reportsNavUrl = '/' . ($navigationPeriod ? '?' . http_build_query($navigationPeriod) : '');
 $ratingNavUrl = '/?' . http_build_query(['view' => 'rating'] + $navigationPeriod);
+$chartsNavUrl = '/?' . http_build_query(['view' => 'charts'] + $navigationPeriod);
 
 $requestedSiteSort = $_GET['site_sort'] ?? null;
-if ($user && !$settingsPage && !$ratingPage && is_string($requestedSiteSort)
+if ($user && !$settingsPage && !$ratingPage && !$chartsPage && is_string($requestedSiteSort)
     && $isValidSiteSort($requestedSiteSort)) {
     $reportSettings = (array) json_decode($user['report_filters'] ?? '{}', true);
     if (($reportSettings['site_sort'] ?? null) !== $requestedSiteSort) {
@@ -724,7 +726,7 @@ function assetUrl(string $file): string
 }
 
 $isAdmin = $user !== null && $user['role'] === 'admin';
-$pageTitle = $settingsPage && $isAdmin ? 'Настройки — CheckAI' : ($ratingPage ? 'Рейтинг — CheckAI' : 'Отчёты — CheckAI');
+$pageTitle = $settingsPage && $isAdmin ? 'Настройки — CheckAI' : ($ratingPage ? 'Рейтинг — CheckAI' : ($chartsPage ? 'Графики — CheckAI' : 'Отчёты — CheckAI'));
 
 ?>
 <!doctype html>
@@ -737,6 +739,7 @@ $pageTitle = $settingsPage && $isAdmin ? 'Настройки — CheckAI' : ($ra
     <script src="<?= escape(assetUrl('theme.js')) ?>"></script>
     <link rel="stylesheet" href="<?= escape(assetUrl('app.css')) ?>">
     <?php if ($user && !$settingsPage): ?><script src="<?= escape(assetUrl('report-filters.js')) ?>" defer></script><?php endif; ?>
+    <?php if ($user && $chartsPage): ?><script src="<?= escape(assetUrl('charts.js')) ?>" defer></script><?php endif; ?>
     <?php if ($settingsPage && $isAdmin): ?><script src="<?= escape(assetUrl('settings.js')) ?>" defer></script><?php endif; ?>
     <?php if ($user): ?><script src="<?= escape(assetUrl('app.js')) ?>" defer></script><?php endif; ?>
 </head>
@@ -750,7 +753,8 @@ $pageTitle = $settingsPage && $isAdmin ? 'Настройки — CheckAI' : ($ra
             <span class="brand__note">Мониторинг ИИ-ботов</span>
         </a>
         <nav class="nav" aria-label="Разделы">
-            <a href="<?= escape($reportsNavUrl) ?>"<?= !$settingsPage && !$ratingPage ? ' aria-current="page"' : '' ?>>Отчёты</a>
+            <a href="<?= escape($reportsNavUrl) ?>"<?= !$settingsPage && !$ratingPage && !$chartsPage ? ' aria-current="page"' : '' ?>>Отчёты</a>
+            <a href="<?= escape($chartsNavUrl) ?>"<?= $chartsPage ? ' aria-current="page"' : '' ?>>Графики</a>
             <a href="<?= escape($ratingNavUrl) ?>"<?= $ratingPage ? ' aria-current="page"' : '' ?>>Рейтинг</a>
             <?php if ($isAdmin): ?>
                 <a href="/?view=settings"<?= $settingsPage ? ' aria-current="page"' : '' ?>>Настройки</a>
@@ -776,8 +780,8 @@ $pageTitle = $settingsPage && $isAdmin ? 'Настройки — CheckAI' : ($ra
     <main id="main" class="main">
         <header class="page-head">
             <div class="page-head__text">
-                <h1><?= $settingsPage && $isAdmin ? 'Настройки' : ($ratingPage ? 'Рейтинг ботов' : 'Отчёты') ?></h1>
-                <p><?= $settingsPage && $isAdmin ? 'Сайты, боты и автосбор' : ($ratingPage ? 'Запросы по компаниям, ботам и сайтам' : 'Запросы ИИ-ботов к вашим сайтам') ?><?php if (!$settingsPage && $lastCollectionAt !== null): ?> (<?= escape($lastCollectionAt->format('d.m.Y H:i:s')) ?>)<?php endif; ?></p>
+                <h1><?= $settingsPage && $isAdmin ? 'Настройки' : ($ratingPage ? 'Рейтинг ботов' : ($chartsPage ? 'Графики' : 'Отчёты')) ?></h1>
+                <p><?= $settingsPage && $isAdmin ? 'Сайты, боты и автосбор' : ($ratingPage ? 'Запросы по компаниям, ботам и сайтам' : ($chartsPage ? 'Запросы ботов по дням и видам' : 'Запросы ИИ-ботов к вашим сайтам')) ?><?php if (!$settingsPage && $lastCollectionAt !== null): ?> (<?= escape($lastCollectionAt->format('d.m.Y H:i:s')) ?>)<?php endif; ?></p>
             </div>
             <?php if ($isAdmin && !$settingsPage): ?>
                 <div class="actions">
@@ -1072,6 +1076,8 @@ $pageTitle = $settingsPage && $isAdmin ? 'Настройки — CheckAI' : ($ra
                     </div>
                 </div>
             <?php endif; ?>
+        <?php elseif ($chartsPage): ?>
+            <?php require dirname(__DIR__) . '/src/charts.php'; ?>
         <?php elseif ($ratingPage): ?>
             <?php require dirname(__DIR__) . '/src/rating.php'; ?>
         <?php else: ?>

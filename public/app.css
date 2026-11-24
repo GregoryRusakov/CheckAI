@@ -615,6 +615,54 @@ a:hover {
 
 /* ---------- Поля ---------- */
 
+.chart__hint {
+    color: var(--muted);
+    font-size: var(--step--1);
+}
+
+.chart__scroll {
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+.chart__plot {
+    display: block;
+    min-width: 100%;
+}
+
+.chart__grid {
+    stroke: var(--rule);
+    stroke-width: 1;
+}
+
+.chart__axis {
+    fill: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+}
+
+.chart__empty {
+    color: var(--muted);
+}
+
+.chart__legend {
+    margin-top: 1rem;
+}
+
+.chart__swatch {
+    display: inline-flex;
+    vertical-align: middle;
+}
+
+.chart__table {
+    margin-top: 1.5rem;
+}
+
+.chart__table summary {
+    color: var(--accent-ink);
+    cursor: pointer;
+}
+
 .field {
     display: flex;
     flex-direction: column;
