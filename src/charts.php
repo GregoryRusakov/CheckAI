@@ -28,6 +28,7 @@ if ($from > $to) {
 $quickPeriods = [
     '30 дней' => [$today->modify('-29 days'), $today],
     'Этот месяц' => [$today->modify('first day of this month'), $today],
+    '14 дней' => [$today->modify('-13 days'), $today],
     'Эта неделя' => [$today->modify('monday this week'), $today],
     'Вчера' => [$today->modify('-1 day'), $today->modify('-1 day')],
     'Сегодня' => [$today, $today],

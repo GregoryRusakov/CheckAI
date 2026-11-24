@@ -97,7 +97,7 @@ if (chart) {
             const [year, month, date] = day.date.split('-');
             const labelX = x + barWidth / 2;
             const labelY = bottom + 8;
-            plot.append(element('text', {x: labelX, y: labelY, transform: `rotate(90 ${labelX} ${labelY})`, class: 'chart__axis'}, `${date}.${month}.${year.slice(-2)}`));
+            plot.append(element('text', {x: labelX, y: labelY, transform: `rotate(-90 ${labelX} ${labelY})`, 'text-anchor': 'end', class: 'chart__axis'}, `${date}.${month}.${year.slice(-2)}`));
         });
     };
 
