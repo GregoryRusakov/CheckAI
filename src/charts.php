@@ -3,6 +3,14 @@
 $timezone = new DateTimeZone($db->query('SELECT report_timezone FROM settings WHERE id = 1')->fetchColumn());
 $today = new DateTimeImmutable('today', $timezone);
 $savedSettings = (array) json_decode($user['report_filters'] ?? '{}', true);
+$filterLabels = [
+    'verified' => 'Только подтверждённые по IP боты',
+    'pages' => 'Исключить картинки, css, js и прочие',
+    'ok' => 'Только успешные (HTTP 200)',
+];
+$filters = isset($_GET['filters_set'])
+    ? array_intersect_key($_GET, $filterLabels)
+    : array_intersect_key($savedSettings, $filterLabels);
 $parseDate = static function (mixed $value) use ($timezone): ?DateTimeImmutable {
     if (!is_string($value) || !preg_match('/^\d{4}-\d{2}-\d{2}$/D', $value)) {
         return null;
@@ -34,10 +42,33 @@ $utc = new DateTimeZone('UTC');
 $db->sqliteCreateFunction('chart_local_date', static function (string $value) use ($timezone): string {
     return (new DateTimeImmutable($value))->setTimezone($timezone)->format('Y-m-d');
 }, 1, PDO::SQLITE_DETERMINISTIC);
+if (isset($filters['pages'])) {
+    $db->sqliteCreateFunction('is_site_page', static function (string $path): int {
+        $path = strtolower(rawurldecode($path));
+        $filename = basename($path);
+        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+        return (int) !in_array($extension, [
+            'js', 'mjs', 'cjs', 'css', 'map', 'wasm',
+            'woff', 'woff2', 'ttf', 'otf', 'eot', 'ttc',
+            'png', 'jpg', 'jpeg', 'jfif', 'gif', 'webp', 'avif', 'svg', 'svgz', 'ico',
+            'bmp', 'tif', 'tiff', 'apng', 'heic', 'heif', 'jxl',
+            'mp3', 'wav', 'ogg', 'oga', 'flac', 'aac', 'm4a',
+            'mp4', 'webm', 'ogv', 'mov', 'm4v', 'm3u8', 'ts', 'vtt',
+            'json', 'webmanifest', 'manifest', 'appcache', 'rss', 'atom',
+        ], true);
+    }, 1, PDO::SQLITE_DETERMINISTIC);
+}
+$conditions = [
+    'verified' => 'EXISTS (SELECT 1 FROM bot_ip_ranges ip WHERE ip.bot_id = r.bot_id
+        AND length(ip.first_ip) = length(r.source_ip) AND r.source_ip BETWEEN ip.first_ip AND ip.last_ip)',
+    'pages' => 'is_site_page(r.request_path) = 1',
+    'ok' => 'r.http_status = 200',
+];
 $query = $db->prepare('SELECT chart_local_date(r.requested_at_utc) AS day, b.bot_type_id, COUNT(*) AS hits
     FROM requests r JOIN bots b ON b.id = r.bot_id JOIN companies c ON c.id = b.company_id
     WHERE r.requested_at_utc >= :start AND r.requested_at_utc < :end
-        AND b.disabled = 0 AND c.disabled = 0' . ($siteId ? ' AND r.site_id = :site' : '') . '
+        AND b.disabled = 0 AND c.disabled = 0' . ($siteId ? ' AND r.site_id = :site' : '')
+        . ($filters ? ' AND ' . implode(' AND ', array_intersect_key($conditions, $filters)) : '') . '
     GROUP BY day, b.bot_type_id');
 $query->bindValue(':start', $from->setTimezone($utc)->format('Y-m-d\TH:i:s\Z'));
 $query->bindValue(':end', $to->modify('+1 day')->setTimezone($utc)->format('Y-m-d\TH:i:s\Z'));
@@ -63,6 +94,7 @@ $chartData = json_encode(['types' => array_column($botTypes, 'name'), 'days' => 
 <section id="charts">
     <form method="get" action="/" id="report-filters" class="filters">
         <input type="hidden" name="view" value="charts">
+        <input type="hidden" name="filters_set" value="1">
         <div class="filters__controls">
             <label class="field filters__inline-field">
                 <span>Сайт</span>
@@ -81,6 +113,14 @@ $chartData = json_encode(['types' => array_column($botTypes, 'name'), 'days' => 
                 <?php endforeach; ?>
             </div>
         </div>
+        <fieldset class="filters__flags">
+            <legend class="filters__legend">Учитывать в графике</legend>
+            <div class="filters__checks">
+                <?php foreach ($filterLabels as $key => $label): ?>
+                    <label class="check"><input type="checkbox" name="<?= escape($key) ?>" value="1"<?= isset($filters[$key]) ? ' checked' : '' ?>> <?= escape($label) ?></label>
+                <?php endforeach; ?>
+            </div>
+        </fieldset>
         <noscript><button class="btn" type="submit">Применить</button></noscript>
     </form>
     <div class="scope"><h2>Запросы по дням</h2></div>
