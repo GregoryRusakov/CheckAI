@@ -3,7 +3,11 @@ const chart = document.querySelector('[data-chart]');
 if (chart) {
     const data = JSON.parse(chart.dataset.chart);
     const plot = chart.querySelector('.chart__plot');
+    const scroll = chart.querySelector('.chart__scroll');
     const empty = chart.querySelector('.chart__empty');
+    const tooltip = chart.querySelector('.chart__tooltip');
+    const tooltipTotal = tooltip.querySelector('.chart__tooltip-total');
+    const tooltipType = tooltip.querySelector('.chart__tooltip-type');
     const controls = [...chart.querySelectorAll('[data-chart-type]')];
     const colors = ['#328263', '#b67a32', '#547ca6', '#9a6089', '#9a6351', '#7c8050', '#528d93', '#8071a6'];
     const namespace = 'http://www.w3.org/2000/svg';
@@ -22,12 +26,26 @@ if (chart) {
         swatch.append(icon);
     });
 
+    const positionTooltip = (clientX, clientY) => {
+        const left = Math.max(8, Math.min(clientX + 12, window.innerWidth - tooltip.offsetWidth - 8));
+        const top = Math.max(8, Math.min(clientY + 12, window.innerHeight - tooltip.offsetHeight - 8));
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+    };
+
     const draw = () => {
         const enabled = controls.map((control) => control.checked);
         const totals = data.days.map((day) => day.values.reduce((sum, value, index) => sum + (enabled[index] ? value : 0), 0));
         const max = totals.reduce((highest, total) => Math.max(highest, total), 1);
-        const width = Math.max(600, 72 + data.days.length * 64);
-        const height = 320;
+        const compact = data.days.length > 21;
+        const gap = compact ? 2.8 : 28;
+        const availableWidth = Math.max(600, scroll.clientWidth);
+        const barWidth = compact
+            ? Math.max(12, Math.min(36, Math.floor(((availableWidth - 72) / data.days.length - gap) * 10) / 10))
+            : 36;
+        const barStep = barWidth + gap;
+        const width = Math.max(availableWidth, 72 + data.days.length * barStep);
+        const height = 360;
         const top = 16;
         const bottom = 276;
         const chartHeight = bottom - top;
@@ -35,6 +53,7 @@ if (chart) {
         plot.setAttribute('viewBox', `0 0 ${width} ${height}`);
         plot.setAttribute('width', width);
         plot.setAttribute('height', height);
+        tooltip.hidden = true;
         empty.hidden = totals.some((total) => total > 0);
 
         const tickCount = Math.min(4, max);
@@ -45,21 +64,49 @@ if (chart) {
         }
 
         data.days.forEach((day, dayIndex) => {
-            const x = 72 + dayIndex * 64;
+            const x = 72 + dayIndex * barStep;
             let y = bottom;
             day.values.forEach((value, typeIndex) => {
                 if (!enabled[typeIndex] || value === 0) return;
                 const barHeight = value / max * chartHeight;
                 y -= barHeight;
-                const bar = element('rect', {x, y, width: 36, height: barHeight, fill: colors[typeIndex % colors.length]});
-                bar.append(element('title', {}, `${day.date}: ${data.types[typeIndex]} — ${number.format(value)}`));
+                const totalLabel = `${day.date} · Всего: ${number.format(totals[dayIndex])}`;
+                const typeLabel = `${data.types[typeIndex]}: ${number.format(value)}`;
+                const bar = element('rect', {x, y, width: barWidth, height: barHeight, fill: colors[typeIndex % colors.length], tabindex: 0, 'aria-label': `${totalLabel}. ${typeLabel}`, 'aria-describedby': 'chart-tooltip'});
+                const showTooltip = (clientX, clientY) => {
+                    tooltipTotal.textContent = totalLabel;
+                    tooltipType.textContent = typeLabel;
+                    tooltip.hidden = false;
+                    positionTooltip(clientX, clientY);
+                };
+                bar.addEventListener('pointerenter', (event) => showTooltip(event.clientX, event.clientY));
+                bar.addEventListener('pointermove', (event) => positionTooltip(event.clientX, event.clientY));
+                bar.addEventListener('pointerleave', () => { tooltip.hidden = true; });
+                bar.addEventListener('focus', () => {
+                    const bounds = bar.getBoundingClientRect();
+                    showTooltip(bounds.left + bounds.width / 2, bounds.top);
+                });
+                bar.addEventListener('blur', () => { tooltip.hidden = true; });
                 plot.append(bar);
             });
             const [year, month, date] = day.date.split('-');
-            plot.append(element('text', {x: x + 18, y: 298, 'text-anchor': 'middle', class: 'chart__axis'}, `${date}.${month}.${year.slice(-2)}`));
+            const labelX = x + barWidth / 2;
+            const labelY = bottom + 8;
+            plot.append(element('text', {x: labelX, y: labelY, transform: `rotate(90 ${labelX} ${labelY})`, class: 'chart__axis'}, `${date}.${month}.${year.slice(-2)}`));
         });
     };
 
     controls.forEach((control) => control.addEventListener('change', draw));
     draw();
+    if (typeof ResizeObserver !== 'undefined') {
+        let previousWidth = scroll.clientWidth;
+        new ResizeObserver(() => {
+            if (scroll.clientWidth !== previousWidth) {
+                previousWidth = scroll.clientWidth;
+                draw();
+            }
+        }).observe(scroll);
+    } else {
+        window.addEventListener('resize', draw);
+    }
 }

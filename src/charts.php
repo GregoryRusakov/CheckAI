@@ -126,8 +126,12 @@ $chartData = json_encode(['types' => array_column($botTypes, 'name'), 'days' => 
     <div class="scope"><h2>Запросы по дням</h2></div>
     <p class="chart__hint">Количество запросов за день по видам ботов. Часовой пояс: <?= escape($timezone->getName()) ?>.</p>
     <div class="chart" data-chart="<?= escape($chartData) ?>">
-        <div class="chart__scroll"><svg class="chart__plot" role="img" aria-label="Диаграмма запросов по дням и видам ботов"></svg></div>
+        <div class="chart__scroll"><svg class="chart__plot" preserveAspectRatio="xMinYMin meet" role="img" aria-label="Диаграмма запросов по дням и видам ботов"></svg></div>
         <p class="chart__empty" hidden>За выбранный период запросов выбранных видов нет.</p>
+        <div class="chart__tooltip" id="chart-tooltip" role="tooltip" hidden>
+            <strong class="chart__tooltip-total"></strong>
+            <span class="chart__tooltip-type"></span>
+        </div>
         <fieldset class="filters__flags chart__legend">
             <legend class="filters__legend">Виды ботов</legend>
             <div class="filters__checks">
