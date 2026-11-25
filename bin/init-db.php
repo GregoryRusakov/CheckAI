@@ -154,7 +154,7 @@ try {
         if ($version > 0 && $version < 14) {
             $database->exec("CREATE TABLE settings_new (
                 id INTEGER PRIMARY KEY CHECK (id = 1),
-                log_root TEXT NOT NULL DEFAULT '/var/logs-nginx',
+                log_root TEXT NOT NULL DEFAULT '/var/logs',
                 report_timezone TEXT NOT NULL DEFAULT 'Asia/Yekaterinburg',
                 auto_collect INTEGER NOT NULL DEFAULT 0 CHECK (auto_collect IN (0, 1)),
                 digest_directory TEXT NOT NULL DEFAULT '/var/www/checkai.analitica-soft.ru/digests'

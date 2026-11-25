@@ -16,8 +16,8 @@ services:
       - ./database:/opt/checkai/var
       - ./digests:/var/www/checkai.analitica-soft.ru/digests
       - type: bind
-        source: ${CHECKAI_LOG_DIR:-../logs-nginx}
-        target: /var/logs-nginx
+        source: ${CHECKAI_LOG_DIR:-../logs}
+        target: /var/logs
         read_only: true
         bind:
           create_host_path: false
@@ -31,8 +31,8 @@ services:
     volumes:
       - ./database:/opt/checkai/var
       - type: bind
-        source: ${CHECKAI_LOG_DIR:-../logs-nginx}
-        target: /var/logs-nginx
+        source: ${CHECKAI_LOG_DIR:-../logs}
+        target: /var/logs
         read_only: true
         bind:
           create_host_path: false
