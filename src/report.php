@@ -607,14 +607,26 @@ $scopeTitle = match (true) {
                             <td><a href="<?= escape(reportUrl(['site' => $row['id']])) ?>"><?= escape($row['domain']) ?></a></td>
                             <?php if ($botTypeId === 0): ?>
                                 <td class="num">
-                                    <?php if ($row['hits'] > 0): ?><span class="bar" data-b="<?= countBucket($row['hits'], $typeMaxima[0]) ?>" aria-hidden="true"></span><?php endif; ?>
-                                    <?= formatCount($row['hits']) ?>
+                                    <?php if ($row['hits'] > 0): ?>
+                                        <a class="report-count" href="<?= escape(reportUrl(['site' => $row['id'], 'bot_type' => ''])) ?>">
+                                            <span class="bar" data-b="<?= countBucket($row['hits'], $typeMaxima[0]) ?>" aria-hidden="true"></span>
+                                            <span class="report-count__value"><?= formatCount($row['hits']) ?></span>
+                                        </a>
+                                    <?php else: ?>
+                                        <?= formatCount($row['hits']) ?>
+                                    <?php endif; ?>
                                 </td>
                                 <?php foreach ($botTypes as $type): ?>
                                     <?php $typeHits = $row['types'][(int) $type['id']] ?? 0; ?>
                                     <td class="num">
-                                        <?php if ($typeHits > 0): ?><span class="bar" data-b="<?= countBucket($typeHits, $typeMaxima[(int) $type['id']]) ?>" aria-hidden="true"></span><?php endif; ?>
-                                        <?= formatCount($typeHits) ?>
+                                        <?php if ($typeHits > 0): ?>
+                                            <a class="report-count" href="<?= escape(reportUrl(['site' => $row['id'], 'bot_type' => (int) $type['id']])) ?>">
+                                                <span class="bar" data-b="<?= countBucket($typeHits, $typeMaxima[(int) $type['id']]) ?>" aria-hidden="true"></span>
+                                                <span class="report-count__value"><?= formatCount($typeHits) ?></span>
+                                            </a>
+                                        <?php else: ?>
+                                            <?= formatCount($typeHits) ?>
+                                        <?php endif; ?>
                                     </td>
                                 <?php endforeach; ?>
                             <?php else: ?>
