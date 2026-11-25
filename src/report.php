@@ -239,9 +239,9 @@ $scopeTitle = match (true) {
             <ol>
                 <li><a href="<?= escape(reportUrl()) ?>">Сайты</a></li>
                 <?php if ($company !== false): ?>
-                    <li><a href="<?= escape(reportUrl($siteParams)) ?>"><?= escape($site) ?></a></li>
+                    <li><a href="<?= escape(reportUrl($siteParams)) ?>"><strong><?= escape($site) ?></strong></a></li>
                 <?php else: ?>
-                    <li><span aria-current="page"><?= escape($site) ?></span></li>
+                    <li><span aria-current="page"><strong><?= escape($site) ?></strong></span></li>
                 <?php endif; ?>
                 <?php if ($bot !== false): ?>
                     <li><a href="<?= escape(reportUrl($siteParams + ['company' => $companyId])) ?>"><?= escape($company) ?></a></li>
