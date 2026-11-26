@@ -196,6 +196,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: /?view=settings&tab=users', true, 303);
         exit;
     }
+    if ($action === 'chart_types') {
+        $userId = (int) ($_SESSION['user_id'] ?? 0);
+        $account = $db->prepare('SELECT 1 FROM users WHERE id = ? AND enabled = 1 AND disabled = 0 AND needs_password = 0');
+        $account->execute([$userId]);
+        if (!$account->fetchColumn()) {
+            http_response_code(403);
+            exit;
+        }
+        $submitted = $_POST['disabled_types'] ?? [];
+        if (!is_array($submitted)) {
+            http_response_code(400);
+            exit;
+        }
+        $typeIds = array_map('intval', $db->query('SELECT id FROM bot_types')->fetchAll(PDO::FETCH_COLUMN));
+        $disabledTypes = array_values(array_intersect($typeIds, array_map('intval', $submitted)));
+        $save = $db->prepare("UPDATE users SET report_filters = json_set(CASE WHEN json_valid(report_filters) THEN report_filters ELSE '{}' END, '$.chart_disabled_types', json(?)) WHERE id = ?");
+        $save->execute([json_encode($disabledTypes, JSON_THROW_ON_ERROR), $userId]);
+        http_response_code(204);
+        exit;
+    }
     if ($action === 'report_filters') {
         $filters = [];
         foreach (['verified', 'pages', 'ok'] as $key) {
@@ -231,7 +251,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $filters['bot_type'] = (string) $botTypeId;
             }
         }
-        $save = $db->prepare('UPDATE users SET report_filters = ? WHERE id = ? AND enabled = 1');
+        $save = $db->prepare("UPDATE users SET report_filters = json_set(json(?), '$.chart_disabled_types', json(COALESCE(CASE WHEN json_valid(report_filters) THEN json_extract(report_filters, '$.chart_disabled_types') END, '[]'))) WHERE id = ? AND enabled = 1");
         $save->execute([json_encode($filters), $_SESSION['user_id'] ?? 0]);
         $params = array_filter(
             array_intersect_key($_POST, array_flip(['view', 'site', 'company', 'bot', 'bot_type', 'site_sort', 'time_sort', 'path', 'from', 'to', 'verified', 'pages', 'ok', 'filters_set'])),

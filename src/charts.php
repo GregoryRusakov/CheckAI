@@ -39,6 +39,7 @@ if ($siteId && !in_array($siteId, array_map('intval', array_column($sites, 'id')
     $siteId = 0;
 }
 $botTypes = $db->query('SELECT id, name FROM bot_types ORDER BY id')->fetchAll();
+$disabledTypes = is_array($savedSettings['chart_disabled_types'] ?? null) ? $savedSettings['chart_disabled_types'] : [];
 $utc = new DateTimeZone('UTC');
 $db->sqliteCreateFunction('chart_local_date', static function (string $value) use ($timezone): string {
     return (new DateTimeImmutable($value))->setTimezone($timezone)->format('Y-m-d');
@@ -93,6 +94,7 @@ for ($day = $from; $day <= $to; $day = $day->modify('+1 day')) {
 $chartData = json_encode([
     'types' => array_column($botTypes, 'name'),
     'typeIds' => array_map('intval', array_column($botTypes, 'id')),
+    'csrf' => $token,
     'site' => $siteId,
     'filters' => array_fill_keys(array_keys($filters), '1'),
     'days' => $days,
@@ -143,7 +145,7 @@ $chartData = json_encode([
             <legend class="filters__legend">Виды ботов</legend>
             <div class="filters__checks">
                 <?php foreach ($botTypes as $index => $type): ?>
-                    <label class="check"><input type="checkbox" data-chart-type="<?= $index ?>" checked> <span class="chart__swatch" data-chart-swatch="<?= $index ?>" aria-hidden="true"></span> <?= escape($type['name']) ?></label>
+                    <label class="check"><input type="checkbox" data-chart-type="<?= $index ?>"<?= in_array((int) $type['id'], $disabledTypes, true) ? '' : ' checked' ?>> <span class="chart__swatch" data-chart-swatch="<?= $index ?>" aria-hidden="true"></span> <?= escape($type['name']) ?></label>
                 <?php endforeach; ?>
             </div>
         </fieldset>

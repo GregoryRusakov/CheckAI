@@ -101,7 +101,19 @@ if (chart) {
         });
     };
 
-    controls.forEach((control) => control.addEventListener('change', draw));
+    let saveTypes = Promise.resolve();
+    controls.forEach((control) => control.addEventListener('change', () => {
+        draw();
+        const params = new URLSearchParams({action: 'chart_types', csrf: data.csrf});
+        controls.forEach((item, index) => {
+            if (!item.checked) params.append('disabled_types[]', data.typeIds[index]);
+        });
+        saveTypes = saveTypes.catch(() => {}).then(() => fetch('/', {
+            method: 'POST',
+            body: params,
+            keepalive: true,
+        }));
+    }));
     draw();
     if (typeof ResizeObserver !== 'undefined') {
         let previousWidth = scroll.clientWidth;
