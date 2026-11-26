@@ -736,6 +736,7 @@ $pageTitle = $settingsPage && $isAdmin ? 'Настройки — CheckAI' : ($ra
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f1f2ee">
     <title><?= escape($pageTitle) ?></title>
+    <link rel="icon" type="image/svg+xml" href="<?= escape(assetUrl('favicon.svg')) ?>">
     <script src="<?= escape(assetUrl('theme.js')) ?>"></script>
     <link rel="stylesheet" href="<?= escape(assetUrl('app.css')) ?>">
     <?php if ($user && !$settingsPage): ?><script src="<?= escape(assetUrl('report-filters.js')) ?>" defer></script><?php endif; ?>
